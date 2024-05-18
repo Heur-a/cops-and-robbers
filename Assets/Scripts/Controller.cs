@@ -204,14 +204,16 @@ public class Controller : MonoBehaviour
             {
                 int copTile = cop.GetComponent<CopMove>().currentTile;
                 int distance = GetDistance(tile.numTile, copTile);
-                if (distance < minDistanceToCop)
+
+                // Excluir la casilla actual ocupada por un policía o el ladrón
+                if (distance < minDistanceToCop && copTile != tile.numTile)
                 {
                     minDistanceToCop = distance;
                 }
             }
 
             // Si esta casilla tiene una distancia mínima mayor a la distancia máxima actual, actualizamos
-            if (minDistanceToCop > maxDistance)
+            if (minDistanceToCop > maxDistance && tile.numTile != robber.GetComponent<RobberMove>().currentTile)
             {
                 maxDistance = minDistanceToCop;
                 farthestTile = tile;
