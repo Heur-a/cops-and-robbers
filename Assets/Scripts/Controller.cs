@@ -177,22 +177,85 @@ public class Controller : MonoBehaviour
         clickedTile = robber.GetComponent<RobberMove>().currentTile;
         tiles[clickedTile].current = true;
         FindSelectableTiles(false);
-        /*TODO: Cambia el código de abajo para hacer lo siguiente
-        - Elegimos una casilla aleatoria entre las seleccionables que puede ir el caco
-        - Movemos al caco a esa casilla
-        - Actualizamos la variable currentTile del caco a la nueva casilla
-        */
+
         // Obtener todas las casillas seleccionables
         List<Tile> selectableTiles = tiles.Where(tile => tile.selectable).ToList();
 
-        // Elegir una casilla aleatoria entre las seleccionables
-        int randomIndex = Random.Range(0, selectableTiles.Count);
-        Tile randomTile = selectableTiles[randomIndex];
+        // Encontrar la casilla más alejada de cualquier policía
+        Tile farthestTile = FindFarthestTile(selectableTiles);
 
-        // Mover al caco a la casilla aleatoria
-        robber.GetComponent<RobberMove>().MoveToTile(randomTile);
-        robber.GetComponent<RobberMove>().currentTile = randomTile.numTile;
+        // Mover al caco a la casilla más alejada
+        robber.GetComponent<RobberMove>().MoveToTile(farthestTile);
+        robber.GetComponent<RobberMove>().currentTile = farthestTile.numTile;
     }
+
+    // Método para encontrar la casilla más alejada de cualquier policía
+    private Tile FindFarthestTile(List<Tile> selectableTiles)
+    {
+        int maxDistance = -1;
+        Tile farthestTile = null;
+
+        foreach (Tile tile in selectableTiles)
+        {
+            int minDistanceToCop = int.MaxValue;
+
+            // Encuentra la distancia mínima desde esta casilla a cualquier policía
+            foreach (GameObject cop in cops)
+            {
+                int copTile = cop.GetComponent<CopMove>().currentTile;
+                int distance = GetDistance(tile.numTile, copTile);
+                if (distance < minDistanceToCop)
+                {
+                    minDistanceToCop = distance;
+                }
+            }
+
+            // Si esta casilla tiene una distancia mínima mayor a la distancia máxima actual, actualizamos
+            if (minDistanceToCop > maxDistance)
+            {
+                maxDistance = minDistanceToCop;
+                farthestTile = tile;
+            }
+        }
+
+        return farthestTile;
+    }
+
+    // Método para obtener la distancia entre dos casillas usando BFS
+    private int GetDistance(int startTile, int endTile)
+    {
+        if (startTile == endTile) return 0;
+
+        bool[] visited = new bool[Constants.NumTiles];
+        Queue<int> queue = new Queue<int>();
+        int[] distances = new int[Constants.NumTiles];
+
+        queue.Enqueue(startTile);
+        visited[startTile] = true;
+
+        while (queue.Count > 0)
+        {
+            int currentTile = queue.Dequeue();
+
+            foreach (int neighbor in tiles[currentTile].adjacency)
+            {
+                if (!visited[neighbor])
+                {
+                    visited[neighbor] = true;
+                    distances[neighbor] = distances[currentTile] + 1;
+                    queue.Enqueue(neighbor);
+
+                    if (neighbor == endTile)
+                    {
+                        return distances[neighbor];
+                    }
+                }
+            }
+        }
+
+        return int.MaxValue; // No se encontró un camino
+    }
+
 
     public void EndGame(bool end)
     {
