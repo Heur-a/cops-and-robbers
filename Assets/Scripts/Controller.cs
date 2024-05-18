@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -63,31 +64,36 @@ public class Controller : MonoBehaviour
         //TODO: Para cada posición, rellenar con 1's las casillas adyacentes (arriba, abajo, izquierda y derecha)
         for (int i = 0; i < Constants.NumTiles; i++)
         {
+
             //izquierda
             if (i % Constants.TilesPerRow != 0)
             {
-                matriu[i, i - 1] = 1;
+                int izquierda = i - 1;
+                matriu[i, izquierda] = 1;
+                tiles[i].adjacency.Add(izquierda);
             }
             //derecha
             if (i % Constants.TilesPerRow != Constants.TilesPerRow - 1)
             {
                 int derecha = i + 1;
                 matriu[i, derecha] = 1;
+                tiles[i].adjacency.Add(derecha);
             }
             //abajo
             if (i >= Constants.TilesPerRow)
             {
                 int abajo = i - Constants.TilesPerRow;
                 matriu[i, abajo] = 1;
+                tiles[i].adjacency.Add(abajo);
             }
             //arriba
             if (i < Constants.NumTiles - Constants.TilesPerRow)
             {
                 int arriba = i + Constants.TilesPerRow;
                 matriu[i, arriba] = 1;
+                tiles[i].adjacency.Add(arriba);
             }
         }
-        //TODO: Rellenar la lista "adjacency" de cada casilla con los índices de sus casillas adyacentes
 
     }
 
@@ -177,7 +183,7 @@ public class Controller : MonoBehaviour
         - Movemos al caco a esa casilla
         - Actualizamos la variable currentTile del caco a la nueva casilla
         */
-        robber.GetComponent<RobberMove>().MoveToTile(tiles[robber.GetComponent<RobberMove>().currentTile]);
+        
     }
 
     public void EndGame(bool end)
@@ -220,28 +226,57 @@ public class Controller : MonoBehaviour
 
     public void FindSelectableTiles(bool cop)
     {
-                 
-        int indexcurrentTile;        
+        int indexcurrentTile;
 
-        if (cop==true)
+        if (cop == true)
             indexcurrentTile = cops[clickedCop].GetComponent<CopMove>().currentTile;
         else
             indexcurrentTile = robber.GetComponent<RobberMove>().currentTile;
 
-        //La ponemos rosa porque acabamos de hacer un reset
+        // La ponemos rosa porque acabamos de hacer un reset
         tiles[indexcurrentTile].current = true;
 
-        //Cola para el BFS
-        Queue<Tile> nodes = new Queue<Tile>();
+        // Cola para el BFS
+        Queue<Tile> nodes = new();
+        nodes.Enqueue(tiles[indexcurrentTile]);
 
-        //TODO: Implementar BFS. Los nodos seleccionables los ponemos como selectable=true
-        //Tendrás que cambiar este código por el BFS
-        for(int i = 0; i < Constants.NumTiles; i++)
+        // Nivel actual del BFS
+        int currentLevel = 0;
+
+        // Mientras haya nodos en la cola
+        while (nodes.Count > 0)
         {
-            tiles[i].selectable = true;
+            // Obtener el siguiente nodo de la cola
+            Tile currentNode = nodes.Dequeue();
+
+            // Si el nivel actual es menor o igual a 2
+            if (currentLevel <= 2)
+            {
+                // Para cada casilla adyacente
+                foreach (int adjacentTileIndex in currentNode.adjacency)
+                {
+                    Tile adjacentTile = tiles[adjacentTileIndex];
+
+                    // Si la casilla adyacente no es la casilla actual, no ha sido visitada, no contiene un policía y no es la current tile de ningún otro policía
+                    if (adjacentTile != currentNode && !adjacentTile.visited && !cops.Any(c => c.GetComponent<CopMove>().currentTile == adjacentTileIndex))
+                    {
+                        // Marcar la casilla adyacente como visitada y seleccionable
+                        adjacentTile.visited = true;
+                        adjacentTile.selectable = true;
+
+                        // Añadir la casilla adyacente a la cola para explorar sus adyacentes en el siguiente nivel
+                        nodes.Enqueue(adjacentTile);
+                    }
+                }
+            }
+
+            // Si hemos explorado todos los nodos del nivel actual
+            if (currentNode == tiles[indexcurrentTile])
+            {
+                // Incrementar el nivel actual
+                currentLevel++;
+            }
         }
-
-
     }
     
    
