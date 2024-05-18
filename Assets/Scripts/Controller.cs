@@ -177,13 +177,21 @@ public class Controller : MonoBehaviour
         clickedTile = robber.GetComponent<RobberMove>().currentTile;
         tiles[clickedTile].current = true;
         FindSelectableTiles(false);
-
         /*TODO: Cambia el código de abajo para hacer lo siguiente
         - Elegimos una casilla aleatoria entre las seleccionables que puede ir el caco
         - Movemos al caco a esa casilla
         - Actualizamos la variable currentTile del caco a la nueva casilla
         */
-        
+        // Obtener todas las casillas seleccionables
+        List<Tile> selectableTiles = tiles.Where(tile => tile.selectable).ToList();
+
+        // Elegir una casilla aleatoria entre las seleccionables
+        int randomIndex = Random.Range(0, selectableTiles.Count);
+        Tile randomTile = selectableTiles[randomIndex];
+
+        // Mover al caco a la casilla aleatoria
+        robber.GetComponent<RobberMove>().MoveToTile(randomTile);
+        robber.GetComponent<RobberMove>().currentTile = randomTile.numTile;
     }
 
     public void EndGame(bool end)
@@ -246,12 +254,15 @@ public class Controller : MonoBehaviour
         // Mientras haya nodos en la cola
         while (nodes.Count > 0)
         {
-            // Obtener el siguiente nodo de la cola
-            Tile currentNode = nodes.Dequeue();
+            // Obtener el número de nodos en el nivel actual
+            int levelNodeCount = nodes.Count;
 
-            // Si el nivel actual es menor o igual a 2
-            if (currentLevel <= 2)
+            // Explorar los nodos del nivel actual
+            for (int i = 0; i < levelNodeCount; i++)
             {
+                // Obtener el siguiente nodo de la cola
+                Tile currentNode = nodes.Dequeue();
+
                 // Para cada casilla adyacente
                 foreach (int adjacentTileIndex in currentNode.adjacency)
                 {
@@ -270,12 +281,12 @@ public class Controller : MonoBehaviour
                 }
             }
 
-            // Si hemos explorado todos los nodos del nivel actual
-            if (currentNode == tiles[indexcurrentTile])
-            {
-                // Incrementar el nivel actual
-                currentLevel++;
-            }
+            // Incrementar el nivel actual
+            currentLevel++;
+
+            // Si hemos explorado los dos niveles de distancia, salir del bucle
+            if (currentLevel > 1)
+                break;
         }
     }
     
