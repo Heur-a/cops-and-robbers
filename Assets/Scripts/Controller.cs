@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -274,6 +274,7 @@ public class Controller : MonoBehaviour
                         // Marcar la casilla adyacente como visitada y seleccionable
                         adjacentTile.visited = true;
                         adjacentTile.selectable = true;
+                        Debug.Log(adjacentTile.numTile);
 
                         // Añadir la casilla adyacente a la cola para explorar sus adyacentes en el siguiente nivel
                         nodes.Enqueue(adjacentTile);
